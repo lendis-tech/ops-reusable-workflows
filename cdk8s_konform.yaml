@@ -1,0 +1,34 @@
+inputs:
+  GH_CICD_ACTIONS_ACCESS_KEY:
+    required: true
+    type: string
+    description: Github access token for the hosted NPM
+  directory:
+    required: true
+    type: string
+  environment:
+    required: false
+    type: string
+    default: prod-default
+
+runs:
+  using: "composite"
+  steps:
+      - uses: actions/checkout@v3
+
+      - name: Add npm specific lendis-tech domain
+        working-directory: ${{ inputs.directory }}
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=${{ inputs.GH_CICD_ACTIONS_ACCESS_KEY }}" >> ~/.npmrc
+          echo "@lendis-tech:registry=https://npm.pkg.github.com" >> ~/.npmrc
+          npm i
+          npm i @lendis-tech/ops-crd-schemas@latest
+          npm i --location=global cdk8s-cli
+          export TARGET_ENV=${{ inputs.environment }}
+          npm run build:resources
+
+      - uses: docker://ghcr.io/yannh/kubeconform:master
+        with:
+          entrypoint: '/kubeconform'
+          args: -summary -verbose -schema-location default -schema-location "${{ inputs.directory }}/node_modules/@lendis-tech/ops-crd-schemas/schemas/{{ .ResourceKind }}-{{ .ResourceAPIVersion }}.json" webservice/dist/
+          
