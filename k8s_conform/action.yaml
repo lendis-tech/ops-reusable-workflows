@@ -18,6 +18,7 @@ runs:
 
       - name: Add npm specific lendis-tech domain
         working-directory: ${{ inputs.directory }}
+        shell: bash
         run: |
           echo "//npm.pkg.github.com/:_authToken=${{ inputs.GH_CICD_ACTIONS_ACCESS_KEY }}" >> ~/.npmrc
           echo "@lendis-tech:registry=https://npm.pkg.github.com" >> ~/.npmrc
