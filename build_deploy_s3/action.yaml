@@ -1,0 +1,52 @@
+inputs:
+  AWS_ACCESS_KEY_ID:
+    required: true
+    type: string
+  AWS_SECRET_ACCESS_KEY:
+    required: true
+    type: string
+  AWS_CODE_ARTIFACT_BUCKET_ACCESS:
+    required: true
+    type: string
+    
+runs:
+  using: "composite"
+  steps:
+  - name: Setup Node.js
+    uses: actions/setup-node@v1
+    with:
+      node-version: '16.x'
+
+  - name: Run npm install
+    run: npm ci
+  
+  - name: Run npm run build
+    run: npm run build
+
+  - name: Extract tags
+    id: tags
+    uses: docker/metadata-action@v4
+    with:
+      images: |
+        ${{ github.event.repository.name }}
+      tags: |
+        type=ref,event=branch
+        type=ref,event=pr
+        type=semver,pattern={{version}}
+        type=semver,pattern={{major}}.{{minor}}
+
+  - name: Configure AWS credentials
+    uses: aws-actions/configure-aws-credentials@v1
+    with:
+      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_STAGING }}
+      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_STAGING }}
+      aws-region: eu-central-1
+
+  - name: Deploy
+    working-directory: cdk/build
+    run: |
+      find . -type f -name "*.js" | xargs -I {} zip -r "{}.zip" {}
+      for tag in "${{ steps.tags.outputs.tags }}"; do
+        echo "Syncing for tag ${tag}"
+        find . -type f -name "*.zip" | xargs -I {} aws s3 cp {} ${{ secrets.AWS_CODE_ARTIFACT_BUCKET_ACCESS }}/$tag/
+      done
