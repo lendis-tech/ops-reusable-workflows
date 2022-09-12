@@ -18,9 +18,11 @@ runs:
       node-version: '16.x'
 
   - name: Run npm install
+    shell: bash
     run: npm ci
   
   - name: Run npm run build
+    shell: bash
     run: npm run build
 
   - name: Extract tags
@@ -44,6 +46,7 @@ runs:
 
   - name: Deploy
     working-directory: cdk/build
+    shell: bash
     run: |
       find . -type f -name "*.js" | xargs -I {} zip -r "{}.zip" {}
       for tag in "${{ steps.tags.outputs.tags }}"; do
