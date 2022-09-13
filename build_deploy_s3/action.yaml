@@ -51,5 +51,5 @@ runs:
       find . -type f -name "*.js" | xargs -I {} zip -r "{}.zip" {}
       for tag in "${{ steps.tags.outputs.tags }}"; do
         echo "Syncing for tag ${tag}"
-        find . -type f -name "*.zip" | xargs -I {} aws s3 cp {} ${{ inputs.AWS_CODE_ARTIFACT_BUCKET_ACCESS }}/$tag/
+        find . -type f -name "*.zip" | sed -e 's/^.\///' | xargs -I {} aws s3 cp {} ${{ inputs.AWS_CODE_ARTIFACT_BUCKET_ACCESS }}/$tag/{}
       done
