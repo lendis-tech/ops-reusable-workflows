@@ -57,3 +57,7 @@ runs:
         echo "Syncing for tag ${tag}"
         find . -type f -name "*.zip" | sed -e 's/^.\///' | xargs -I {} aws s3 cp {} ${{ inputs.AWS_CODE_ARTIFACT_BUCKET_ACCESS }}/$tag/{}
       done
+
+  - id: tags
+    run: echo "::set-output name=tags::${{ steps.tags.outputs.tags }}"
+    shell: bash
