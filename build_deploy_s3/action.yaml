@@ -12,7 +12,10 @@ inputs:
     required: false
     type: string
     default: cdk/build
-    
+outputs:
+  tags:
+    description: "S3 tags"
+    value: ${{ steps.tags_def.outputs.tags }}  
 runs:
   using: "composite"
   steps:
@@ -57,7 +60,3 @@ runs:
         echo "Syncing for tag ${tag}"
         find . -type f -name "*.zip" | sed -e 's/^.\///' | xargs -I {} aws s3 cp {} ${{ inputs.AWS_CODE_ARTIFACT_BUCKET_ACCESS }}/$tag/{}
       done
-
-  - id: tags
-    run: echo "::set-output name=tags::${{ steps.tags.outputs.tags }}"
-    shell: bash
