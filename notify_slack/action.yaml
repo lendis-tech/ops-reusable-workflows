@@ -1,0 +1,31 @@
+inputs:
+  SLACK_WEBHOOK:
+    required: true
+    type: string
+    description: Github access token for the hosted NPM
+
+runs:
+  using: "composite"
+  steps: 
+    - name: Notify on slack
+      id: slack
+      uses: slackapi/slack-github-action@v1.18.0
+      if: always()
+      with:
+        # For posting a rich message using Block Kit
+        payload: |
+            {
+              "text": "SRE Upload to S3 action result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "## ${{ success() && '✅' || '❌' } ${{ job.status }}\nRepository: ${{ github.repository}}, Ref: ${{ github.ref }}.\nWorkflow: ${{ github.workflow }}\nWorkflow result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
+                  }
+                }
+              ]
+            }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
